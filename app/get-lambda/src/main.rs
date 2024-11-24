@@ -5,7 +5,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 
-/// Main function handler.  This is executed when a request comes in via the Function URL
+/// Main function handler.  This is executed when a Kestra invokes my Lambda
 async fn function_handler(mut event: LambdaEvent<ReadModel>) -> Result<ReadModel, Error> {
     event.payload.updated_timestamp = chrono::Utc::now();
     Ok(event.payload)
