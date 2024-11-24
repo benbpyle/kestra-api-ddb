@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "app/get-lambda",
+    "app/post-lambda",
+    "app/shared"
+]
+resolver = "2"
