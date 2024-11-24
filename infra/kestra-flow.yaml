@@ -1,0 +1,55 @@
+id: article-1
+namespace: binaryheap.com
+inputs:
+  - id: payload
+    type: JSON
+    defaults: |
+      {
+        "name": "One",
+        "description": "Description"
+      }
+tasks:
+  - id: post_item
+    type: "io.kestra.plugin.core.http.Request"
+    uri: <URL> 
+    method: POST
+    contentType: application/json
+    body: "{{ inputs.payload }}"
+  - id: print_status
+    type: io.kestra.plugin.core.log.Log
+    message: '{{ outputs.post_item.body }}'    
+
+  - id: log 
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ outputs.post_item.body | jq('.id') | first }}"
+
+  - id: extract_data
+    type: io.kestra.plugin.aws.dynamodb.GetItem
+    tableName: ArticleTable
+    # fetchType: FETCH
+    accessKeyId: <ACCESS KEY ID>
+    secretKeyId: <SECRET KEY ID>
+    region: us-west-2
+    key:
+       id: "{{ outputs.post_item.body | jq('.id') | first }}"
+
+  - id: ddb_log
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ outputs.extract_data.row }}"
+  
+  - id: invoke
+    type: io.kestra.plugin.aws.lambda.Invoke
+    accessKeyId: <ACCESS KEY ID>
+    secretKeyId: <SECRET KEY KD>
+    region: us-west-2    
+    functionArn: "<FUNCTION ARN>"
+    functionPayload: 
+        id: "{{ outputs.extract_data.row.id }}"
+        name: "{{ outputs.extract_data.row.name }}"
+        description: "{{ outputs.extract_data.row.description }}"
+        createdTimestamp: "{{ outputs.extract_data.row.created_at }}"
+        updatedTimestamp: "{{ outputs.extract_data.row.updated_at }}"
+
+  - id: lambda_log
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ read(outputs.invoke.uri) }}"
